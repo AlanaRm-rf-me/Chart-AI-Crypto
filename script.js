@@ -1,61 +1,101 @@
-const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
-
+const COINCAP_API_BASE = 'https://api.coincap.io/v2';
 let priceChart = null;
-let cryptoData = null;
-
-async function getCoinId(symbol) {
-    const response = await fetch(`${COINGECKO_API_BASE}/search?query=${symbol}`);
-    if (!response.ok) throw new Error('Failed to search coin');
-    const data = await response.json();
-    const coin = data.coins.find(c => c.symbol.toLowerCase() === symbol.toLowerCase());
-    if (!coin) throw new Error('Cryptocurrency not found');
-    return coin.id;
-}
 
 async function analyzeCrypto() {
     const symbol = document.getElementById('cryptoSymbol').value.toLowerCase().trim();
-    if (!symbol) {
-        showError('Please enter a crypto symbol');
-        return;
-    }
-
+    const errorMessage = document.getElementById('errorMessage');
+    const dataContainer = document.getElementById('dataContainer');
+    
     try {
-        showError('');
-        document.getElementById('dataContainer').classList.remove('active');
-        
-        const coinId = await getCoinId(symbol);
-        const response = await fetch(`${COINGECKO_API_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=1&interval=minutely`);
+        errorMessage.style.display = 'none';
+        const response = await fetch(`${COINCAP_API_BASE}/assets/${symbol}`);
         
         if (!response.ok) {
-            throw new Error('Failed to fetch data');
+            throw new Error(`Failed to fetch data. Status: ${response.status}`);
         }
-
+        
         const data = await response.json();
         
-        if (!data || !data.prices || data.prices.length === 0) {
-            throw new Error('No price data available');
+        if (!data.data) {
+            throw new Error('Invalid cryptocurrency symbol');
         }
-
-        cryptoData = data;
-        document.getElementById('dataContainer').classList.add('active');
-        updateChart(data);
-
+        
+        dataContainer.classList.add('active');
+        updateUI(data.data);
     } catch (error) {
-        showError(error.message);
-        console.error('Error:', error);
-        document.getElementById('dataContainer').classList.remove('active');
+        dataContainer.classList.remove('active');
+        errorMessage.textContent = error.message;
+        errorMessage.style.display = 'block';
+        if (priceChart) {
+            priceChart.destroy();
+            priceChart = null;
+        }
     }
 }
 
-function updateChart(historyData) {
-    const ctx = document.getElementById('priceChart').getContext('2d');
+function updateUI(coin) {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = `
+        <tr>
+            <td>Current Price</td>
+            <td>$${parseFloat(coin.priceUsd).toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td>24h Change</td>
+            <td class="${parseFloat(coin.changePercent24Hr) >= 0 ? 'positive' : 'negative'}">
+                ${parseFloat(coin.changePercent24Hr).toFixed(2)}%
+            </td>
+        </tr>
+        <tr>
+            <td>Market Cap</td>
+            <td>$${parseFloat(coin.marketCapUsd).toLocaleString()}</td>
+        </tr>
+        <tr>
+            <td>Volume (24h)</td>
+            <td>$${parseFloat(coin.volumeUsd24Hr).toLocaleString()}</td>
+        </tr>
+    `;
+
+    fetchHistory(coin.id);
+}
+
+async function fetchHistory(id) {
+    try {
+        const now = new Date();
+        const start = new Date(now - 24 * 60 * 60 * 1000); // 24 hours ago
+        
+        const response = await fetch(`${COINCAP_API_BASE}/assets/${id}/history?interval=h1&start=${start.getTime()}&end=${now.getTime()}`);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch history data. Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.data || !Array.isArray(data.data)) {
+            throw new Error('Invalid history data received');
+        }
+        
+        updateChart(data.data);
+    } catch (error) {
+        document.getElementById('errorMessage').textContent = error.message;
+        document.getElementById('errorMessage').style.display = 'block';
+        if (priceChart) {
+            priceChart.destroy();
+            priceChart = null;
+        }
+    }
+}
+
+function updateChart(history) {
+    const ctx = document.getElementById('priceChart');
     
     if (priceChart) {
         priceChart.destroy();
     }
 
-    const dates = historyData.prices.map(price => new Date(price[0]).toLocaleTimeString());
-    const prices = historyData.prices.map(price => price[1]);
+    const dates = history.map(price => new Date(price.time).toLocaleTimeString());
+    const prices = history.map(price => parseFloat(price.priceUsd));
 
     priceChart = new Chart(ctx, {
         type: 'line',
@@ -79,7 +119,6 @@ function updateChart(historyData) {
             },
             scales: {
                 y: {
-                    beginAtZero: false,
                     ticks: {
                         callback: value => '$' + value.toLocaleString()
                     }
@@ -90,32 +129,24 @@ function updateChart(historyData) {
                     callbacks: {
                         label: context => '$' + context.parsed.y.toLocaleString()
                     }
-                },
-                legend: {
-                    display: true,
-                    position: 'top'
                 }
             }
         }
     });
 }
 
-function showError(message) {
-    const errorElement = document.getElementById('errorMessage');
-    if (message) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-    } else {
-        errorElement.style.display = 'none';
-    }
-}
-
-// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('cryptoSymbol').addEventListener('keypress', function(event) {
+    document.getElementById('cryptoSymbol').addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             analyzeCrypto();
         }
     });
+
+    document.getElementById('analyzeBtn').addEventListener('click', (event) => {
+        event.preventDefault();
+        analyzeCrypto();
+    });
 });
+
+window.analyzeCrypto = analyzeCrypto;
