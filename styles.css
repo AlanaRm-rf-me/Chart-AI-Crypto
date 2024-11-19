@@ -1,0 +1,83 @@
+body {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+.card {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+}
+
+.table {
+    color: #ffffff !important;
+}
+
+.positive {
+    color: #00ff00 !important;
+}
+
+.negative {
+    color: #ff0000 !important;
+}
+
+#dataContainer {
+    display: none;
+}
+
+#dataContainer.active {
+    display: flex;
+}
+
+.input-group .form-control {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+    color: #ffffff;
+}
+
+.input-group .form-control:focus {
+    background-color: #2a2a2a;
+    border-color: #4a4a4a;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.modal-content {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+.form-control {
+    background-color: #1a1a1a !important;
+    border-color: #3a3a3a !important;
+    color: #ffffff !important;
+}
+
+.form-control:focus {
+    background-color: #1a1a1a !important;
+    border-color: #4a4a4a !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+#signalIndicator .badge {
+    font-size: 1.2em;
+    padding: 10px 20px;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}

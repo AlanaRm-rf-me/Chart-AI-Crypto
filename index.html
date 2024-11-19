@@ -3,119 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Analyzer</title>
+    <title>Crypto Portfolio Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .input-section {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 200px;
-        }
-        button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .chart-container {
-            margin: 20px 0;
-            height: 400px;
-            position: relative;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        .positive {
-            color: #4CAF50;
-        }
-        .negative {
-            color: #dc3545;
-        }
-        .error-message {
-            color: #dc3545;
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            display: none;
-        }
-        .data-container {
-            display: none;
-        }
-        .data-container.active {
-            display: block;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/technicalindicators/dist/browser.js"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>Crypto Analyzer</h1>
+<body class="bg-dark text-light">
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Crypto Portfolio Tracker</h1>
         
-        <div class="input-section">
-            <input type="text" id="cryptoSymbol" placeholder="Enter crypto name (e.g., bitcoin)" />
-            <button id="analyzeBtn">Analyze</button>
+        <!-- Search Section -->
+        <div class="row mb-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="input-group">
+                    <input type="text" id="cryptoSymbol" class="form-control" placeholder="Enter cryptocurrency symbol (e.g., btc)">
+                    <button class="btn btn-primary" id="analyzeBtn">Analyze</button>
+                </div>
+                <div id="errorMessage" class="alert alert-danger mt-2" style="display: none;"></div>
+            </div>
         </div>
 
-        <div class="error-message" id="errorMessage"></div>
-
-        <div class="data-container" id="dataContainer">
-            <div class="chart-container">
-                <canvas id="priceChart"></canvas>
+        <!-- Portfolio Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark border-light">
+                    <div class="card-header">
+                        <h4>Your Portfolio</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Holdings</th>
+                                        <th>Price</th>
+                                        <th>Value</th>
+                                        <th>24h Change</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="portfolioTableBody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-success" id="addAssetBtn" data-bs-toggle="modal" data-bs-target="#addAssetModal">Add Asset</button>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div id="tableContainer">
-                <h2>Current Metrics</h2>
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                    </tbody>
-                </table>
+        <!-- Data Container -->
+        <div id="dataContainer" class="row" style="display: none;">
+            <div class="col-md-8">
+                <div class="card bg-dark border-light mb-4">
+                    <div class="card-header">
+                        <h4>Price Chart</h4>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceChart" style="height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-light mb-4">
+                    <div class="card-header">
+                        <h4>Market Data</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-dark">
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card bg-dark border-light">
+                    <div class="card-header">
+                        <h4>AI Trading Signal</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="tradingSignal" class="text-center">
+                            <div id="signalIndicator" class="mb-3">
+                                <span class="badge bg-secondary">Analyzing...</span>
+                            </div>
+                            <div id="signalReason" class="small text-muted"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Add Asset Modal -->
+    <div class="modal fade" id="addAssetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Asset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAssetForm">
+                        <div class="mb-3">
+                            <label class="form-label">Symbol</label>
+                            <input type="text" class="form-control" id="assetSymbol" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <input type="number" class="form-control" id="assetAmount" step="any" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAssetBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
