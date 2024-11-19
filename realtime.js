@@ -1,4 +1,4 @@
-const CRYPTOCOMPARE_API_KEY = 'YOUR_API_KEY_HERE'; // Get free API key from CryptoCompare
+const CRYPTOCOMPARE_API_KEY = '1a9286290d0a05d143066a71a3ab030390bf7cc27e8dfa671b11833ea929c7fb'; // Get free API key from CryptoCompare
 const MAX_DATA_POINTS = 100;
 let chart = null;
 let priceData = [];
